@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILAW Lesson Plan Generator — for DepEd Teachers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10243E;
+    --navy:#1B3A63;
+    --navy-soft:#2C4E7E;
+    --paper:#F6F8FB;
+    --card:#FFFFFF;
+    --line:#D9E0EA;
+    --lamp:#E89B1C;
+    --lamp-deep:#C77F0A;
+    --lamp-glow:#FFD98A;
+    --teacher:#FFF3C4;
+    --teacher-line:#E6C34A;
+    --text:#22304A;
+    --muted:#5B6B84;
+    --ok:#1E7B4F;
+    --err:#B4322A;
+    --radius:10px;
+    --font-display:'Zilla Slab', Georgia, serif;
+    --font-body:'Public Sans', system-ui, sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *,*::before,*::after{animation:none!important;transition:none!important} }
+  body{font-family:var(--font-body);background:var(--paper);color:var(--text);line-height:1.6;font-size:16px}
+
+  /* ---------- Header ---------- */
+  header{
+    background:
+      radial-gradient(620px 300px at 50% -80px, rgba(255,217,138,.28), transparent 70%),
+      linear-gradient(160deg, var(--ink) 0%, var(--navy) 100%);
+    color:#F2F6FC;
+    padding:44px 20px 40px;
+    text-align:center;
+  }
+  .lamp{width:54px;height:54px;margin:0 auto 14px;display:block;filter:drop-shadow(0 0 14px rgba(255,217,138,.55))}
+  header h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,4.5vw,2.5rem);letter-spacing:.01em}
+  header h1 .lit{color:var(--lamp-glow)}
+  .subtitle{max-width:640px;margin:10px auto 0;color:#C6D3E4;font-size:.98rem}
+  .ilaw-key{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:20px}
+  .ilaw-key span{
+    font-size:.78rem;letter-spacing:.04em;border:1px solid rgba(255,255,255,.25);
+    border-radius:999px;padding:5px 13px;color:#DCE6F3;background:rgba(255,255,255,.05)
+  }
+  .ilaw-key b{color:var(--lamp-glow);font-weight:700}
+
+  main{max-width:960px;margin:0 auto;padding:34px 20px 80px}
+
+  /* ---------- Form ---------- */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 3px rgba(16,36,62,.06)}
+  .panel-head{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .panel-head h2{font-family:var(--font-display);font-size:1.25rem;color:var(--ink)}
+  .panel-head p{color:var(--muted);font-size:.88rem}
+  form{padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.full{grid-column:1 / -1}
+  label{font-weight:600;font-size:.86rem;color:var(--ink)}
+  label .req{color:var(--err)}
+  .hint{font-weight:400;color:var(--muted);font-size:.78rem}
+  input,select,textarea{
+    font-family:var(--font-body);font-size:.95rem;color:var(--text);
+    border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#FBFCFE;width:100%
+  }
+  textarea{min-height:74px;resize:vertical}
+  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--lamp);outline-offset:1px;border-color:var(--lamp)}
+  .btn{
+    font-family:var(--font-body);font-weight:700;font-size:1rem;cursor:pointer;border:none;border-radius:8px;
+    padding:13px 24px;transition:background .15s ease, transform .1s ease
+  }
+  .btn-primary{background:var(--lamp);color:#2B1D02;grid-column:1/-1;box-shadow:0 2px 8px rgba(232,155,28,.35)}
+  .btn-primary:hover{background:var(--lamp-deep);color:#fff}
+  .btn-primary:active{transform:translateY(1px)}
+  .btn-primary:disabled{background:#E4D9BF;color:#8B8368;cursor:not-allowed;box-shadow:none}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--navy);font-weight:600;font-size:.88rem;padding:9px 16px}
+  .btn-ghost:hover{border-color:var(--navy-soft);background:#F0F4FA}
+
+  /* ---------- Status ---------- */
+  #status{display:none;margin-top:22px;text-align:center;padding:28px 20px}
+  #status.show{display:block}
+  .wick{width:38px;height:38px;margin:0 auto 12px;animation:flicker 1.4s ease-in-out infinite alternate;filter:drop-shadow(0 0 10px rgba(232,155,28,.6))}
+  @keyframes flicker{from{opacity:.55;transform:scale(.96)}to{opacity:1;transform:scale(1.04)}}
+  #statusText{font-weight:600;color:var(--navy)}
+  #statusSub{color:var(--muted);font-size:.85rem;margin-top:4px}
+  .error-box{display:none;margin-top:18px;background:#FBEAE9;border:1px solid #E8B7B3;border-radius:8px;padding:14px 18px;color:var(--err);font-size:.9rem}
+  .error-box.show{display:block}
+
+  /* ---------- Output ---------- */
+  #output{display:none;margin-top:30px}
+  #output.show{display:block}
+  .toolbar{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:14px}
+  .plan{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .plan-header{background:linear-gradient(160deg,var(--ink),var(--navy));color:#F2F6FC;padding:26px 30px;text-align:center}
+  .plan-header .doc-eyebrow{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--lamp-glow);font-weight:600}
+  .plan-header h3{font-family:var(--font-display);font-size:1.45rem;margin-top:6px}
+  .plan-header p{color:#C6D3E4;font-size:.85rem;margin-top:4px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));border-bottom:1px solid var(--line)}
+  .meta-cell{padding:12px 18px;border-bottom:1px solid var(--line)}
+  .meta-cell .k{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .meta-cell .v{font-size:.92rem;color:var(--ink);font-weight:600;margin-top:2px}
+  .standards{padding:6px 0;border-bottom:1px solid var(--line)}
+  .std-row{padding:12px 30px;display:grid;grid-template-columns:200px 1fr;gap:14px;border-bottom:1px dashed var(--line)}
+  .std-row:last-child{border-bottom:none}
+  .std-row .k{font-size:.78rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em}
+  .std-row .v{font-size:.92rem}
+
+  section.ilaw{padding:26px 30px;border-bottom:1px solid var(--line)}
+  section.ilaw:last-of-type{border-bottom:none}
+  .sec-title{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .sec-letter{
+    font-family:var(--font-display);font-weight:700;font-size:1.5rem;color:var(--lamp-deep);
+    width:46px;height:46px;flex:0 0 46px;display:flex;align-items:center;justify-content:center;
+    border:2px solid var(--lamp);border-radius:50%;background:radial-gradient(circle,#FFF6E3,#FFEDC7)
+  }
+  .sec-title h4{font-family:var(--font-display);font-size:1.2rem;color:var(--ink)}
+  .sec-title small{display:block;color:var(--muted);font-size:.8rem;font-family:var(--font-body);font-weight:400}
+  .sub-label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);margin:18px 0 8px}
+  .sub-label:first-of-type{margin-top:0}
+  ul.plain{list-style:none;display:flex;flex-direction:column;gap:8px}
+  ul.plain li{padding-left:22px;position:relative;font-size:.93rem}
+  ul.plain li::before{content:"";position:absolute;left:4px;top:.55em;width:8px;height:8px;border-radius:50%;background:var(--lamp)}
+  .session-card{border:1px solid var(--line);border-radius:8px;margin-top:16px;overflow:hidden}
+  .session-card .s-head{background:#EFF3F9;padding:10px 18px;font-weight:700;color:var(--navy);font-size:.92rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+  .session-card .s-body{padding:16px 18px}
+  .flow-step{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+  .flow-step:last-child{border-bottom:none}
+  .flow-step .phase{font-weight:700;color:var(--navy);font-size:.82rem}
+  .flow-step .phase em{display:block;font-style:normal;color:var(--muted);font-weight:500;font-size:.75rem}
+  .code{font-family:var(--font-mono);font-size:.83rem;color:var(--navy)}
+
+  .teacher-box{
+    background:var(--teacher);border:1px dashed var(--teacher-line);border-radius:8px;
+    padding:12px 16px;margin-top:8px;font-size:.9rem;min-height:56px
+  }
+  .teacher-box:focus{outline:2px solid var(--teacher-line)}
+  .teacher-tag{display:inline-block;background:var(--teacher);border:1px solid var(--teacher-line);color:#7A5C00;
+    font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+  .ai-note{padding:20px 30px;background:#F2F5FA;border-top:2px solid var(--lamp);font-size:.85rem;color:var(--muted)}
+  .ai-note b{color:var(--ink)}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;
+    background:var(--ink);color:#fff;padding:11px 22px;border-radius:999px;font-size:.88rem;font-weight:600;
+    transition:transform .25s ease,opacity .25s ease;z-index:50;pointer-events:none
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+  footer{max-width:960px;margin:0 auto;padding:0 20px 40px;color:var(--muted);font-size:.78rem;text-align:center}
+
+  @media (max-width:680px){
+    form{grid-template-columns:1fr}
+    .std-row{grid-template-columns:1fr;gap:4px}
+    .flow-step{grid-template-columns:1fr;gap:2px}
+    section.ilaw{padding:20px 18px}
+    .std-row{padding:12px 18px}
+    .plan-header{padding:20px 18px}
+  }
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{background:#fff}
+    header,.panel,#status,.toolbar,footer,.toast,.error-box{display:none!important}
+    main{padding:0;max-width:100%}
+    #output{margin:0}
+    .plan{border:none}
+    .plan-header{background:var(--ink)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .teacher-box,.sec-letter{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .session-card{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="lamp" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 2C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .6.4 1 1 1h6c.6 0 1-.4 1-1v-2.3c1.8-1.2 3-3.3 3-5.7 0-3.9-3.1-7-7-7Z" fill="#FFD98A"/>
+    <path d="M9 20h6M10 22h4" stroke="#FFD98A" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M12 6v4M10 8h4" stroke="#C77F0A" stroke-width="1.4" stroke-linecap="round"/>
+  </svg>
+  <h1>ILAW <span class="lit">Lesson Plan</span> Generator</h1>
+  <p class="subtitle">Draft a complete lesson plan in the official ILAW format under DepEd Order No. 16, s. 2026 — aligned with the MATATAG curriculum, ready for your professional review.</p>
+  <div class="ilaw-key">
+    <span><b>I</b>ntentions</span>
+    <span><b>L</b>earning Experiences</span>
+    <span><b>A</b>ssessment</span>
+    <span><b>W</b>ays Forward</span>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Lesson details</h2>
+      <p>Fill in the details below, then generate your draft.</p>
+    </div>
+    <form id="planForm" autocomplete="off">
+      <div class="field">
+        <label for="grade">Grade level <span class="req">*</span></label>
+        <select id="grade" required>
+          <option value="">Select grade level…</option>
+          <option>Kindergarten</option>
+          <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option>
+          <option>Grade 4</option><option>Grade 5</option><option>Grade 6</option>
+          <option>Grade 7</option><option>Grade 8</option><option>Grade 9</option>
+          <option>Grade 10</option><option>Grade 11</option><option>Grade 12</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="subject">Subject / Learning area <span class="req">*</span></label>
+        <select id="subject" required>
+          <option value="">Select subject…</option>
+          <option>English</option>
+          <option>Filipino</option>
+          <option>Mathematics</option>
+          <option>Science</option>
+          <option>Araling Panlipunan</option>
+          <option>Edukasyon sa Pagpapakatao (ESP / GMRC)</option>
+          <option>MAPEH</option>
+          <option>TLE / EPP</option>
+          <option>Language</option>
+          <option>Reading and Literacy</option>
+          <option>Makabansa</option>
+          <option>Senior High School — Core Subject</option>
+          <option>Senior High School Electives</option>
+          <option value="other">Other (type below in Topic)</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label for="topic">Topic <span class="req">*</span> <span class="hint">e.g., "Photosynthesis", "Adding dissimilar fractions"</span></label>
+        <input type="text" id="topic" required placeholder="What is the lesson about?">
+      </div>
+      <div class="field">
+        <label for="sessions">Number of sessions <span class="req">*</span></label>
+        <select id="sessions" required>
+          <option value="1">1 session</option>
+          <option value="2">2 sessions</option>
+          <option value="3">3 sessions</option>
+          <option value="4">4 sessions</option>
+          <option value="5">5 sessions</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="minutes">Minutes per session <span class="hint">optional</span></label>
+        <select id="minutes">
+          <option value="">Not specified</option>
+          <option value="30">30 minutes</option>
+          <option value="40">40 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="50">50 minutes</option>
+          <option value="60">60 minutes</option>
+          <option value="90">1.5 hours (90 minutes)</option>
+          <option value="120">2 hours (120 minutes)</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label for="competency">Learning competency <span class="req">*</span> <span class="hint">paste from the MATATAG curriculum guide, including the code if available</span></label>
+        <textarea id="competency" required placeholder="e.g., Describes the process of photosynthesis… (S6LT-IIa-b-1)"></textarea>
+      </div>
+      <div class="field full">
+        <label for="contentStd">Content standard <span class="req">*</span></label>
+        <textarea id="contentStd" required placeholder="The learners demonstrate understanding of…"></textarea>
+      </div>
+      <div class="field full">
+        <label for="perfStd">Performance standard <span class="req">*</span></label>
+        <textarea id="perfStd" required placeholder="The learners shall be able to…"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" id="generateBtn">✦ Generate ILAW lesson plan</button>
+    </form>
+  </div>
+
+  <div id="status" role="status" aria-live="polite">
+    <svg class="wick" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .6.4 1 1 1h6c.6 0 1-.4 1-1v-2.3c1.8-1.2 3-3.3 3-5.7 0-3.9-3.1-7-7-7Z" fill="#E89B1C"/>
+    </svg>
+    <div id="statusText">Lighting up your lesson plan…</div>
+    <div id="statusSub"></div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div id="output">
+    <div class="toolbar">
+      <button class="btn btn-ghost" id="copyBtn">Copy as text</button>
+      <button class="btn btn-ghost" id="printBtn">Print / Save as PDF</button>
+      <button class="btn btn-ghost" id="newBtn">Start a new plan</button>
+    </div>
+    <div class="plan" id="planDoc"></div>
+  </div>
+</main>
+
+<footer>
+  This tool produces a <b>draft</b> under the ILAW framework (DepEd Order No. 16, s. 2026). Core instructional decisions — learner context, final objectives, reflections, and the Declaration of AI Use — remain the professional responsibility of the teacher. Review and adapt all content to your actual learners before use.
+</footer>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const form = $('planForm');
+const statusEl = $('status'), statusText = $('statusText'), statusSub = $('statusSub');
+const errorBox = $('errorBox'), output = $('output'), planDoc = $('planDoc');
+const generateBtn = $('generateBtn');
+let lastPlan = null;
+
+function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function setStatus(main, sub){ statusText.textContent = main; statusSub.textContent = sub || ''; }
+function showError(msg){
+  errorBox.textContent = msg;
+  errorBox.classList.add('show');
+  statusEl.classList.remove('show');
+  generateBtn.disabled = false;
+  generateBtn.textContent = '✦ Generate ILAW lesson plan';
+}
+
+async function callClaude(prompt, system){
+  const messages = [{ role: 'user', content: prompt }];
+  const body = { model: 'claude-sonnet-4-6', max_tokens: 1000, messages };
+  if (system) body.system = system;
+
+  const MAX_TRIES = 3;
+  let lastErr = null;
+  for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (response.status === 429 || response.status >= 500) {
+        throw new Error('RETRYABLE:' + response.status);
+      }
+      if (!response.ok) throw new Error('The AI service returned an error (' + response.status + '). Please try again in a moment.');
+      const data = await response.json();
+      const text = (data.content || []).map(i => i.type === 'text' ? i.text : '').join('\n');
+      const clean = text.replace(/```json|```/g, '').trim();
+      const start = clean.indexOf('{');
+      const end = clean.lastIndexOf('}');
+      if (start === -1 || end === -1) throw new Error('RETRYABLE:parse');
+      return JSON.parse(clean.slice(start, end + 1));
+    } catch (err) {
+      lastErr = err;
+      const isNetwork = err instanceof TypeError; // "Failed to fetch"
+      const isRetryable = isNetwork || (err.message || '').startsWith('RETRYABLE:') || err instanceof SyntaxError;
+      if (isRetryable && attempt < MAX_TRIES) {
+        setStatus('Connection hiccup — retrying (attempt ' + (attempt + 1) + ' of ' + MAX_TRIES + ')…', 'Please keep this page open');
+        await new Promise(r => setTimeout(r, 2500 * attempt));
+        continue;
+      }
+      if (isNetwork) {
+        throw new Error('Could not reach the AI service ("failed to fetch"). Please check the following, then try again: (1) Make sure you are logged in to your Claude.ai account, then reload this page. (2) Disable ad blockers or privacy extensions for this site. (3) If you are on a school or office network, try mobile data or another connection.');
+      }
+      if ((err.message || '').startsWith('RETRYABLE:')) {
+        throw new Error('The AI service is busy right now. Please wait about a minute and try again, or reduce the number of sessions.');
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
+const SYSTEM = 'You are an expert Filipino public school master teacher and instructional designer. You write DepEd MATATAG-aligned lesson plan content in the ILAW format (Intentions, Learning Experiences, Assessment, Ways Forward) per DepEd Order No. 16, s. 2026. Content must be practical, learner-centered, classroom-ready, and contextualized for Filipino learners (local examples, low-cost materials, inclusive strategies). Respond ONLY with valid JSON — no preamble, no markdown fences, no commentary. Keep every string concise (one to two sentences max per item).';
+
+function corePrompt(d){
+  return `Create the core sections of an ILAW lesson plan.
+
+Grade level: ${d.grade}
+Subject: ${d.subject}
+Topic: ${d.topic}
+Number of sessions: ${d.sessions}
+Learning competency: ${d.competency}
+Content standard: ${d.contentStd}
+Performance standard: ${d.perfStd}
+
+Return ONLY this JSON structure:
+{
+  "objectives": ["3-4 specific learning objectives unpacked from the competency, covering knowledge, skills, and attitudes/tasks; each starts with an action verb"],
+  "assessment": {
+    "formative": [{"title":"short name of assessment task","description":"what learners do and what the teacher looks for"}], 
+    "accommodations": ["2-3 accommodations for diverse learners (struggling, advanced, learners with disabilities)"]
+  },
+  "waysForward": {
+    "extendedLearning": ["2-3 extended learning opportunities outside the classroom, feasible in a Filipino home/community context"]
+  }
+}
+Provide exactly 2-3 formative assessment items appropriate for ${d.sessions} session(s).`;
+}
+
+function sessionPrompt(d, n, objectives){
+  return `Create the Learning Experiences section for Session ${n} of ${d.sessions} of an ILAW lesson plan.
+
+Grade level: ${d.grade}
+Subject: ${d.subject}
+Topic: ${d.topic}
+Learning competency: ${d.competency}
+Lesson objectives: ${objectives.join('; ')}
+${d.minutes ? 'Session length: ' + d.minutes + ' minutes' : ''}
+${d.sessions > 1 ? 'Sessions must progress logically: earlier sessions introduce and explore; later sessions deepen, apply, and consolidate. This is session ' + n + '.' : ''}
+
+Return ONLY this JSON structure:
+{
+  "focus": "one short phrase describing this session's focus",
+  "preLesson": "how the teacher prepares learners at the start (recall, hook, or connection to prior learning), 1-2 sentences",
+  "flow": [{"phase":"short phase name (e.g., Activate, Explore, Discuss, Apply, Synthesize)","minutes": approximate integer minutes or null,"activity":"what teacher and learners do, 1-2 sentences"}],
+  "resources": ["2-4 concrete, low-cost learning resources"],
+  "integration": ["1-2 opportunities for integration with other learning areas or values"]
+}
+Provide 4-5 flow phases.`;
+}
+
+function buildInputs(){
+  return {
+    grade: $('grade').value,
+    subject: $('subject').value === 'other' ? 'See topic' : $('subject').value,
+    topic: $('topic').value.trim(),
+    sessions: parseInt($('sessions').value, 10),
+    minutes: $('minutes').value,
+    competency: $('competency').value.trim(),
+    contentStd: $('contentStd').value.trim(),
+    perfStd: $('perfStd').value.trim()
+  };
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errorBox.classList.remove('show');
+  output.classList.remove('show');
+  const d = buildInputs();
+  generateBtn.disabled = true;
+  generateBtn.textContent = 'Generating…';
+  statusEl.classList.add('show');
+  statusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  try {
+    setStatus('Drafting Intentions, Assessment, and Ways Forward…', 'Unpacking the competency into objectives');
+    const core = await callClaude(corePrompt(d), SYSTEM);
+
+    const sessionsData = [];
+    for (let n = 1; n <= d.sessions; n++) {
+      setStatus('Designing Learning Experiences — Session ' + n + ' of ' + d.sessions + '…', 'Building the lesson flow, resources, and integration');
+      const s = await callClaude(sessionPrompt(d, n, core.objectives || []), SYSTEM);
+      sessionsData.push(s);
+    }
+
+    lastPlan = { inputs: d, core, sessions: sessionsData };
+    renderPlan(lastPlan);
+    statusEl.classList.remove('show');
+    output.classList.add('show');
+    output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    console.error(err);
+    showError((err && err.message) ? err.message : 'Something went wrong while generating. Please try again — if it keeps failing, wait a minute or reduce the number of sessions.');
+    return;
+  }
+  generateBtn.disabled = false;
+  generateBtn.textContent = '✦ Generate ILAW lesson plan';
+});
+
+function renderPlan(p){
+  const d = p.inputs, core = p.core;
+  const list = arr => '<ul class="plain">' + (arr || []).map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+
+  const sessionsHtml = p.sessions.map((s, i) => `
+    <div class="session-card">
+      <div class="s-head"><span>Session ${i + 1}${d.sessions > 1 ? ' of ' + d.sessions : ''}${s.focus ? ' — ' + esc(s.focus) : ''}</span>${d.minutes ? '<span>' + esc(d.minutes) + ' min</span>' : ''}</div>
+      <div class="s-body">
+        <div class="sub-label">Pre-lesson</div>
+        <p style="font-size:.92rem">${esc(s.preLesson)}</p>
+        <div class="sub-label">Lesson flow</div>
+        ${(s.flow || []).map(f => `
+          <div class="flow-step">
+            <div class="phase">${esc(f.phase)}${f.minutes ? '<em>~' + esc(f.minutes) + ' min</em>' : ''}</div>
+            <div>${esc(f.activity)}</div>
+          </div>`).join('')}
+        <div class="sub-label">Learning resources</div>
+        ${list(s.resources)}
+        <div class="sub-label">Opportunities for integration</div>
+        ${list(s.integration)}
+      </div>
+    </div>`).join('');
+
+  planDoc.innerHTML = `
+    <div class="plan-header">
+      <div class="doc-eyebrow">Republic of the Philippines · Department of Education</div>
+      <h3>ILAW Lesson Plan</h3>
+      <p>Intentions · Learning Experiences · Assessment · Ways Forward — DepEd Order No. 16, s. 2026</p>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-cell"><div class="k">Grade level</div><div class="v">${esc(d.grade)}</div></div>
+      <div class="meta-cell"><div class="k">Learning area</div><div class="v">${esc(d.subject)}</div></div>
+      <div class="meta-cell"><div class="k">Topic</div><div class="v">${esc(d.topic)}</div></div>
+      <div class="meta-cell"><div class="k">Sessions</div><div class="v">${esc(d.sessions)}${d.minutes ? ' × ' + esc(d.minutes) + ' min' : ''}</div></div>
+    </div>
+
+    <div class="standards">
+      <div class="std-row"><div class="k">Learning competency</div><div class="v code">${esc(d.competency)}</div></div>
+      <div class="std-row"><div class="k">Content standard</div><div class="v">${esc(d.contentStd)}</div></div>
+      <div class="std-row"><div class="k">Performance standard</div><div class="v">${esc(d.perfStd)}</div></div>
+    </div>
+
+    <section class="ilaw">
+      <div class="sec-title">
+        <div class="sec-letter">I</div>
+        <h4>Intentions<small>What learners should know and be able to do</small></h4>
+      </div>
+      <div class="sub-label">Learning objectives</div>
+      ${list(core.objectives)}
+      <div class="sub-label">Learner context <span class="teacher-tag">Teacher to complete</span></div>
+      <div class="teacher-box" contenteditable="true" data-key="learnerContext" data-placeholder="Describe your learners: observations, strengths, interests, and barriers to learning in your actual class.">Describe your learners: observations, strengths, interests, and barriers to learning in your actual class.</div>
+    </section>
+
+    <section class="ilaw">
+      <div class="sec-title">
+        <div class="sec-letter">L</div>
+        <h4>Learning Experiences<small>Pre-lesson, lesson flow, resources, and integration per session</small></h4>
+      </div>
+      ${sessionsHtml}
+    </section>
+
+    <section class="ilaw">
+      <div class="sec-title">
+        <div class="sec-letter">A</div>
+        <h4>Assessment<small>Formative assessment and accommodations</small></h4>
+      </div>
+      <div class="sub-label">Formative assessment</div>
+      <ul class="plain">${(core.assessment?.formative || []).map(f => '<li><b>' + esc(f.title) + '.</b> ' + esc(f.description) + '</li>').join('')}</ul>
+      <div class="sub-label">Accommodations for diverse learners</div>
+      ${list(core.assessment?.accommodations)}
+    </section>
+
+    <section class="ilaw">
+      <div class="sec-title">
+        <div class="sec-letter">W</div>
+        <h4>Ways Forward<small>Extended learning and teacher reflection</small></h4>
+      </div>
+      <div class="sub-label">Extended learning opportunities</div>
+      ${list(core.waysForward?.extendedLearning)}
+      <div class="sub-label">Teacher reflection <span class="teacher-tag">Teacher to complete</span></div>
+      <div class="teacher-box" contenteditable="true">After teaching: What worked? What would I change? What do my learners want to explore next? Notes for coaching or LAC sharing.</div>
+    </section>
+
+    <div class="ai-note">
+      <b>Declaration of AI Use (per DepEd Order No. 3, s. 2026):</b>
+      <div class="teacher-box" contenteditable="true" style="margin-top:8px">This lesson plan draft was generated with the assistance of an AI tool. The teacher reviewed, revised, and adapted the objectives, activities, and assessments to fit the actual learners and classroom context. <i>(Edit this statement to reflect your actual use.)</i></div>
+    </div>`;
+}
+
+/* ---------- Toolbar actions ---------- */
+$('printBtn').addEventListener('click', () => window.print());
+
+$('newBtn').addEventListener('click', () => {
+  output.classList.remove('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+$('copyBtn').addEventListener('click', async () => {
+  if (!lastPlan) return;
+  const d = lastPlan.inputs, c = lastPlan.core;
+  const L = [];
+  L.push('ILAW LESSON PLAN (DepEd Order No. 16, s. 2026)');
+  L.push('='.repeat(50));
+  L.push('Grade Level: ' + d.grade);
+  L.push('Learning Area: ' + d.subject);
+  L.push('Topic: ' + d.topic);
+  L.push('Sessions: ' + d.sessions + (d.minutes ? ' x ' + d.minutes + ' min' : ''));
+  L.push('Learning Competency: ' + d.competency);
+  L.push('Content Standard: ' + d.contentStd);
+  L.push('Performance Standard: ' + d.perfStd);
+  L.push('');
+  L.push('I — INTENTIONS');
+  L.push('Learning Objectives:');
+  (c.objectives || []).forEach(o => L.push('  • ' + o));
+  L.push('Learner Context: [TEACHER TO COMPLETE]');
+  L.push('');
+  L.push('L — LEARNING EXPERIENCES');
+  lastPlan.sessions.forEach((s, i) => {
+    L.push('Session ' + (i + 1) + (s.focus ? ' — ' + s.focus : ''));
+    L.push('  Pre-lesson: ' + s.preLesson);
+    L.push('  Lesson Flow:');
+    (s.flow || []).forEach(f => L.push('    - ' + f.phase + (f.minutes ? ' (~' + f.minutes + ' min)' : '') + ': ' + f.activity));
+    L.push('  Resources: ' + (s.resources || []).join('; '));
+    L.push('  Integration: ' + (s.integration || []).join('; '));
+    L.push('');
+  });
+  L.push('A — ASSESSMENT');
+  ((c.assessment || {}).formative || []).forEach(f => L.push('  • ' + f.title + ': ' + f.description));
+  L.push('Accommodations:');
+  ((c.assessment || {}).accommodations || []).forEach(a => L.push('  • ' + a));
+  L.push('');
+  L.push('W — WAYS FORWARD');
+  L.push('Extended Learning:');
+  ((c.waysForward || {}).extendedLearning || []).forEach(w => L.push('  • ' + w));
+  L.push('Teacher Reflection: [TEACHER TO COMPLETE]');
+  L.push('');
+  L.push('DECLARATION OF AI USE (DepEd Order No. 3, s. 2026): [TEACHER TO COMPLETE — state how AI was used and how you reviewed/adapted the draft.]');
+  try {
+    await navigator.clipboard.writeText(L.join('\n'));
+    const t = $('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  } catch (e) {
+    alert('Copy failed — please select the text manually.');
+  }
+});
+</script>
+</body>
+</html>
